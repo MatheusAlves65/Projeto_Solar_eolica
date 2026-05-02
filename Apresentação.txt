@@ -1,0 +1,37 @@
+O que precisa ser feito:
+Executar os cálculos e as análises descritas a seguir para a região escolhida:
+Cálculo das médias horárias mensais e médias mensais de IRRADIAÇÃO GLOBAL HORIZONTAL 
+    - Media das horas a respeito do mês
+    - Media mensais
+    - Opcional -> Media sazonal se der
+Cálculo das médias horárias mensais e médias mensais de TEMPERATURA AMBIENTE
+    - Media das horas a respeito do mês
+    - Media mensais
+    - Opcional -> Media sazonal se der
+Elaboração da CARTA SOLAR (basta pegar na internet)
+
+Apresentação (Slides):https://docs.google.com/presentation/d/11RIU-DK7sFRo0_crS7_rxrlKJx2oYleUGAVTyoo38qM/edit?usp=sharing
+1° bloco - Contextualização da região
+    - Fotos região
+    - Localização geográfica
+2° bloco - Origem dos dados
+    - Fotos da estação da Sonda/NOA/Imet
+    - Mapa para mostar as disntacias entre as estações
+    - Complementaridade dos dados de TEMPERATURA
+    - Justificativa da exclusão de dados impresisos
+    - Comparação a respeito de colocar os dados negativos nas contas de media(Fazer a respeito de um mês)-> pegar mês que mais tem dado negativo
+3° Dados    
+    - Gráfico médias horárias mensais IRRADIAÇÃO GLOBAL HORIZONTAL
+    - Gráficos médias mensais IRRADIAÇÃO GLOBAL HORIZONTAL
+    - Gráfico médias horárias mensais TEMPERATURA AMBIENTE
+    - Gráfico médias mensais TEMPERATURA AMBIENTE
+    - Gráficos médias sazonal IRRADIAÇÃO GLOBAL HORIZONTAL(Inverno e verão)
+    - Gráfico médias sazonal TEMPERATURA AMBIENTE (Inverno e verão)
+    - Carta Solar
+
+4° Compração dos dados  
+    - Comparação LABREN com nossos dados
+    - Comparação Interior do Estado
+    - Comparações continentais
+
+5° Conclusão (A Definir)    

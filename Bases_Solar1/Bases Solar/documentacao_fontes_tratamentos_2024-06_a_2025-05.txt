@@ -1,0 +1,106 @@
+﻿DOCUMENTACAO DAS FONTES E DO PROCESSAMENTO - PROJETO SONDA NATAL + TEMPERATURA
+Periodo de trabalho: 2024-06-01 00:00:00 UTC a 2025-05-31 23:59:00 UTC
+
+1. LINKS DAS BASES DE DADOS
+SONDA / INPE / Natal:
+https://sonda.ccst.inpe.br/est_natal.html
+INMET - Dados Historicos:
+https://portal.inmet.gov.br/dadoshistoricos
+INMET arquivo 2024:
+https://portal.inmet.gov.br/uploads/dadoshistoricos/2024.zip
+INMET arquivo 2025:
+https://portal.inmet.gov.br/uploads/dadoshistoricos/2025.zip
+NOAA NCEI - GHCNh produto:
+https://www.ncei.noaa.gov/products/global-historical-climatology-network-hourly
+NOAA GHCNh lista de estacoes:
+https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/doc/ghcnh-station-list.csv
+NOAA SBNT 2024:
+https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_BRI0000SBNT_2024.psv
+NOAA SBNT 2025:
+https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_BRI0000SBNT_2025.psv
+NOAA BRM00081839 2024:
+https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2024/psv/GHCNh_BRM00081839_2024.psv
+NOAA BRM00081839 2025:
+https://www.ncei.noaa.gov/oa/global-historical-climatology-network/hourly/access/by-year/2025/psv/GHCNh_BRM00081839_2025.psv
+
+2. ESTACOES E METADADOS
+SONDA Natal: localizacao = -5,837 ; -35,206 ; altitude = 58,0 m ; variaveis principais = radiacao global horizontal, radiacao direta normal, radiacao difusa, PAR ; intervalo = 1 minuto
+INMET A304 Natal: localizacao = -5,83722221 ; -35,20805555 ; altitude = 47,46 m ; variaveis usadas = temperatura do ar horaria, ponto de orvalho, temperatura maxima na hora anterior, temperatura minima na hora anterior ; intervalo = 1 hora
+NOAA BRM00081839 Natal: localizacao = -5,8333 ; -35,2 ; altitude = 66,5 m ; variavel usada = temperatura horaria ; intervalo = 1 hora
+NOAA SBNT Augusto Severo: localizacao = -5,9114 ; -35,2477 ; altitude = 51,5 m ; variavel usada = temperatura horaria ; intervalo = 1 hora
+
+3. DISTANCIAS ENTRE OS PONTOS
+SONDA -> INMET A304 = 0.229 km
+SONDA -> NOAA BRM00081839 = 0.781 km
+INMET A304 -> NOAA BRM00081839 = 0.992 km
+SONDA -> NOAA SBNT = 9.472 km
+INMET A304 -> NOAA SBNT = 9.341 km
+
+4. COBERTURAS MEDIDAS AO LONGO DA ANALISE
+SONDA - cobertura temporal do eixo de tempo = 100,00% (525600/525600 minutos, sem timestamps faltantes)
+SONDA - cobertura das variaveis solarimetricas principais (glo_avg, dir_avg, dif_avg, par_avg) = 96.24%
+SONDA - maior lacuna consecutiva nas variaveis principais = 19532 minutos = 13.56 dias ; inicio = 2024-09-06 15:57:00 ; fim = 2024-09-20 05:28:00
+INMET A304 horario = 78,17% (6848/8760 horas)
+NOAA BRM00081839 horario = 72,26% (6330/8760 horas)
+INMET A304 + NOAA BRM00081839 = 78.17% ; observacao = nao aumentou a cobertura em relacao ao INMET, porque as horas do NOAA BRM00081839 ja estavam contidas nas horas existentes da A304
+INMET A304 + NOAA SBNT = 99.65% (8729/8760 horas)
+INMET A304 + NOAA SBNT - maior lacuna consecutiva = 3 horas ; inicio = 2024-07-14 22:00:00 ; fim = 2024-07-15 00:00:00
+
+5. COMPARACAO ENTRE TEMPERATURAS COEXISTENTES
+INMET A304 x NOAA BRM00081839 nas horas coincidentes: media(INMET-NOAA) = 0,001 C ; desvio padrao = 0,063 C ; MAE = 0,040 C ; RMSE = 0,063 C ; conclusao = praticamente iguais nas horas em comum
+INMET A304 x NOAA SBNT bruto nas horas coincidentes usadas para calibracao: media(INMET-SBNT) = 0.246 C ; desvio padrao = 1.105 C ; MAE = 0.874 C ; RMSE = 1.132 C
+
+6. PASSO A PASSO DOS TRATAMENTOS
+6.1. Os arquivos mensais da SONDA de 06/2024 a 05/2025 foram descompactados e unidos em um unico arquivo anual, mantendo um unico cabecalho e a ordem cronologica.
+6.2. O historico do INMET da estacao A304 de 2024 e 2025 foi localizado nos ZIPs anuais oficiais e exportado para uma serie horaria do periodo de interesse.
+6.3. Foram testadas estacoes NOAA proximas ao ponto da SONDA. A BRM00081839 foi analisada por proximidade espacial, mas nao aumentou a cobertura sobre a A304.
+6.4. Foi testada a estacao NOAA SBNT (Augusto Severo), mais distante, porem com cobertura temporal muito superior para preencher lacunas.
+6.5. Para a composicao A304 + SBNT, a regra foi: usar A304 sempre que existir dado; usar SBNT apenas nas lacunas da A304.
+6.6. Antes do preenchimento com SBNT, foi aplicado ajuste de vies com base na sobreposicao horaria entre A304 e SBNT.
+6.7. Foi criado um arquivo horario unificado com colunas brutas e coluna resultante.
+6.8. Depois a temperatura horaria foi levada para a grade minuto a minuto da SONDA de duas formas: repeticao do valor horario dentro da propria hora e interpolacao linear apenas dentro de pares de horas consecutivas.
+
+7. COMO A AGREGACAO DE TEMPERATURAS FOI FEITA
+Arquivo horario unificado recomendado: base_temperatura_unificada_A304_SBNT_2024-06_a_2025-05.csv
+Regras:
+a) temp_resultante_c = temperatura final horaria.
+b) Se A304 existe na hora, ela tem prioridade.
+c) Se A304 falta e SBNT existe, usa-se SBNT ajustada pelo vies.
+d) A coluna de temperatura interpolada no arquivo SONDA final NAO foi usada para atravessar blocos vazios. Ela so cria variacao intrahora entre H:00 e H+1:00 quando ambas as ancoras horarias existem e sao consecutivas.
+e) Portanto: sim, a tabela geral contem a temperatura agregada das bases juntas em temp_resultante_horaria_c nas linhas HH:00, enquanto as colunas temp_resultante_repetida_c e temp_resultante_interpolada_intrahora_c trazem, respectivamente, a expansao por repeticao e a variacao intrahora.
+
+8. COLUNAS DO ARQUIVO FINAL RECOMENDADO SONDA + TEMPERATURA
+Arquivo: base_sonda_com_temperaturas_A304_SBNT_2024-06_a_2025-05.csv
+timestamp_utc = instante minuto a minuto
+sonda_acronym, sonda_year, sonda_day, sonda_min = metadados temporais e da estacao SONDA
+glo_avg, dir_avg, dif_avg, lw_avg, par_avg, lux_avg = colunas originais da SONDA
+temp_inmet_horaria_c = temperatura da A304 mostrada apenas em HH:00
+temp_sbnt_horaria_bruta_c = temperatura bruta da SBNT mostrada apenas em HH:00
+temp_sbnt_horaria_ajustada_c = temperatura da SBNT apos ajuste de vies, mostrada apenas quando a hora veio da SBNT
+temp_resultante_horaria_c = temperatura final agregada mostrada apenas em HH:00
+fonte_resultante_horaria = A304_NATAL ou SBNT_AUGUSTO_SEVERO na hora exata
+temp_resultante_repetida_c = valor horario repetido dentro de todos os minutos da hora
+fonte_resultante_repetida = origem da repeticao
+temp_resultante_interpolada_intrahora_c = interpolacao linear minuto a minuto apenas entre horas consecutivas validas
+interp_anchor_inicio_utc = ancora inicial da interpolacao
+interp_anchor_fim_utc = ancora final da interpolacao
+interp_valida_consecutiva_1h = 1 quando a interpolacao usa um par H:00 -> H+1:00 valido e consecutivo
+
+9. ARQUIVOS PRINCIPAIS CRIADOS
+Pasta: C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_inmet_A304_2024.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_inmet_A304_2025.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_noaa_BRM00081839_2024.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_noaa_BRM00081839_2025.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_noaa_BRI0000SBNT_2024.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_noaa_BRI0000SBNT_2025.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_bruta_sonda_consolidada_2024-06_a_2025-05.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_temperatura_unificada_A304_BRM00081839_2024-06_a_2025-05.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_temperatura_unificada_A304_SBNT_2024-06_a_2025-05.csv
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_sonda_com_temperaturas_A304_BRM00081839_2024-06_a_2025-05.csv  [exploratorio, nao recomendado como final]
+- C:\Users\caioa\Downloads\NAT_2024_06_a_2025_05_consolidado\csv_bases\base_sonda_com_temperaturas_A304_SBNT_2024-06_a_2025-05.csv  [recomendado como final]
+
+10. CONCLUSAO FINAL PARA O CRITERIO DO PROJETO
+Dados solarimetricos principais: cobertura = 96.24% ; maior buraco = 13.56 dias ; atende ao criterio de buracos menores que 15 dias.
+Dados de temperatura recomendados (A304 + SBNT): cobertura = 99.65% ; maior buraco = 3 horas ; atende ao criterio de cobertura alta e buracos muito menores que 15 dias.
+OK
