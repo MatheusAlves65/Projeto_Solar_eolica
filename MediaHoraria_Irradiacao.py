@@ -171,9 +171,13 @@ def gerar_grafico(path: str = CSV_PATH, salvar_html: str | None = None) -> go.Fi
 
 # ── Execução ─────────────────────────────────────────────────────────────────
 
-if __name__ == "__main__":
-    fig = gerar_grafico(
-        path=CSV_PATH,
-        salvar_html="radiacao_global_hora_mensal.html",   # ex: "radiacao_global_mensal.html"
-    )
-    fig.show()
+# ... seu código de gerar o gráfico ...
+fig = gerar_grafico(path=CSV_PATH)
+
+# Exporta o gráfico como HTML parcial (só o div + script, sem o <body>)
+grafico_html = fig.to_html(
+    full_html=False,          # só o <div> do gráfico, não o HTML completo
+    include_plotlyjs="cdn"    # carrega o Plotly via CDN (só na 1ª vez)
+)
+# Cole a variável grafico_html dentro do index.html no lugar do placeholder
+print(grafico_html[:300])  # para ver como ficou
