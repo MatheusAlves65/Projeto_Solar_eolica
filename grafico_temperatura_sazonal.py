@@ -14,7 +14,7 @@ CSV_PATH   = "base_sonda_com_temperaturas_A304_SBNT_2024-06_a_2025-05.csv"
 CSV_SEP    = ";"
 COLUNA     = "temp_resultante_repetida_c"
 INDEX_HTML = "index.html"
-MARCADOR   = "Médias Sazonais — Temperatura"
+MARCADOR   = "!-- Gráfico 6: Sazonal Temperatura --"
 
 ESTACOES = [
     {
