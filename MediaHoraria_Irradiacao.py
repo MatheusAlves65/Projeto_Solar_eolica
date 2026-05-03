@@ -1,18 +1,21 @@
 """
 Radiação Global — Média Horária Mensal
 Estação NAT | Rede SONDA | jun/2024 – mai/2025
+
+Gera o gráfico e injeta no index.html do portal.
 """
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from pathlib import Path
 
 # ── Configurações ────────────────────────────────────────────────────────────
 
-CSV_PATH = "base_sonda_com_temperaturas_A304_SBNT_2024-06_a_2025-05.csv"
-CSV_SEP  = ";"
-COLUNA   = "glo_avg"
+CSV_PATH      = "base_sonda_com_temperaturas_A304_SBNT_2024-06_a_2025-05.csv"
+CSV_SEP       = ";"
+COLUNA        = "glo_avg"
+INDEX_HTML    = "index.html"
+MARCADOR      = "<!-- GRAFICO_RADIACAO_HORARIA -->"
 
 LABELS_MESES = {
     "2024-06": "Jun/24", "2024-07": "Jul/24", "2024-08": "Ago/24",
@@ -21,20 +24,19 @@ LABELS_MESES = {
     "2025-03": "Mar/25", "2025-04": "Abr/25", "2025-05": "Mai/25",
 }
 
-# Azul intenso → azul claro (12 passos)
+# ── Gradiente azul ───────────────────────────────────────────────────────────
+
 def gerar_gradiente_azul(n: int) -> list[str]:
-    """Retorna n cores em gradiente do azul intenso ao azul claro."""
-    azul_intenso = np.array([0, 56, 176])    # RGB azul escuro
-    azul_claro   = np.array([173, 216, 255]) # RGB azul claro
+    azul_intenso = np.array([0, 56, 176])
+    azul_claro   = np.array([173, 216, 255])
     cores = []
     for i in range(n):
-        t = i / max(n - 1, 1)
+        t   = i / max(n - 1, 1)
         rgb = (1 - t) * azul_intenso + t * azul_claro
-        r, g, b = int(rgb[0]), int(rgb[1]), int(rgb[2])
-        cores.append(f"rgb({r},{g},{b})")
+        cores.append(f"rgb({int(rgb[0])},{int(rgb[1])},{int(rgb[2])})")
     return cores
 
-# ── Funções ──────────────────────────────────────────────────────────────────
+# ── Pipeline de dados ────────────────────────────────────────────────────────
 
 def carregar_dados(path: str, sep: str) -> pd.DataFrame:
     df = pd.read_csv(path, sep=sep, low_memory=False)
@@ -56,6 +58,7 @@ def preparar_medias(df: pd.DataFrame) -> pd.DataFrame:
     medias.columns = ["mes", "hora", "media"]
     return medias
 
+# ── Plotly ───────────────────────────────────────────────────────────────────
 
 def criar_traces(medias: pd.DataFrame, meses: list[str]) -> list[go.Scatter]:
     cores = gerar_gradiente_azul(len(meses))
@@ -80,8 +83,8 @@ def criar_traces(medias: pd.DataFrame, meses: list[str]) -> list[go.Scatter]:
 def criar_botoes(meses: list[str]) -> list[dict]:
     n = len(meses)
 
-    def visibilidade(indices_ativos: list[int]) -> list[bool]:
-        return [j in indices_ativos for j in range(n)]
+    def vis(idx_ativos):
+        return [j in idx_ativos for j in range(n)]
 
     botoes = [
         dict(label="Todos",  method="update", args=[{"visible": [True]  * n}]),
@@ -91,7 +94,7 @@ def criar_botoes(meses: list[str]) -> list[dict]:
         botoes.append(dict(
             label=LABELS_MESES.get(mes, mes),
             method="update",
-            args=[{"visible": visibilidade([i])}],
+            args=[{"visible": vis([i])}],
         ))
     return botoes
 
@@ -104,35 +107,26 @@ def montar_layout(botoes: list[dict]) -> go.Layout:
                 "<br><span style='font-size:14px;font-weight:normal;color:gray'>"
                 "Estação NAT | jun/2024 – mai/2025 | glo_avg ≥ 0 W/m²</span>"
             ),
-            x=0.5,
-            xanchor="center",
+            x=0.5, xanchor="center",
         ),
         updatemenus=[dict(
-            type="buttons",
-            direction="right",
-            showactive=True,
-            x=0.5, xanchor="center",
-            y=1.18, yanchor="top",
+            type="buttons", direction="right", showactive=True,
+            x=0.5, xanchor="center", y=1.18, yanchor="top",
             buttons=botoes,
-            bgcolor="#1c1b19",
-            bordercolor="#393836",
+            bgcolor="#1c1b19", bordercolor="#393836",
             font=dict(color="#cdccca", size=12),
             pad=dict(l=4, r=4, t=4, b=4),
         )],
         xaxis=dict(
             title="Hora (UTC)",
-            range=[0, 23],          # eixo x fixo de 0 a 23
-            dtick=1,
-            tickmode="linear",
+            range=[0, 23], dtick=1, tickmode="linear",
             tickvals=list(range(24)),
             ticktext=[f"{h:02d}:00" for h in range(24)],
-            gridcolor="#262523",
-            color="#797876",
+            gridcolor="#262523", color="#797876",
         ),
         yaxis=dict(
             title="glo_avg (W/m²)",
-            gridcolor="#262523",
-            color="#797876",
+            gridcolor="#262523", color="#797876",
         ),
         legend=dict(
             orientation="h",
@@ -148,36 +142,42 @@ def montar_layout(botoes: list[dict]) -> go.Layout:
     )
 
 
-def gerar_grafico(path: str = CSV_PATH, salvar_html: str | None = None) -> go.Figure:
+def gerar_grafico(path: str = CSV_PATH) -> go.Figure:
     df     = carregar_dados(path, CSV_SEP)
     medias = preparar_medias(df)
     meses  = sorted(medias["mes"].unique())
 
-    traces = criar_traces(medias, meses)
-    botoes = criar_botoes(meses)
-    layout = montar_layout(botoes)
-
-    fig = go.Figure(data=traces, layout=layout)
-
-    if salvar_html:
-        fig.write_html(salvar_html)
-        print(f"Salvo em: {salvar_html}")
+    fig = go.Figure(
+        data=criar_traces(medias, meses),
+        layout=montar_layout(criar_botoes(meses)),
+    )
 
     print(f"Meses carregados : {len(meses)}")
     print(f"Registros válidos: {len(df[df[COLUNA] >= 0]):,}")
-
     return fig
 
+# ── Injetar no index.html ────────────────────────────────────────────────────
+
+def injetar_no_portal(fig: go.Figure, html_path: str, marcador: str) -> None:
+    grafico_html = fig.to_html(full_html=False, include_plotlyjs="cdn")
+
+    with open(html_path, "r", encoding="utf-8") as f:
+        portal = f.read()
+
+    if marcador not in portal:
+        print(f"[AVISO] Marcador '{marcador}' não encontrado em {html_path}.")
+        print("Verifique se o comentário está no index.html e tente novamente.")
+        return
+
+    portal = portal.replace(marcador, grafico_html)
+
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(portal)
+
+    print(f"Gráfico injetado com sucesso em: {html_path}")
 
 # ── Execução ─────────────────────────────────────────────────────────────────
 
-# ... seu código de gerar o gráfico ...
-fig = gerar_grafico(path=CSV_PATH)
-
-# Exporta o gráfico como HTML parcial (só o div + script, sem o <body>)
-grafico_html = fig.to_html(
-    full_html=False,          # só o <div> do gráfico, não o HTML completo
-    include_plotlyjs="cdn"    # carrega o Plotly via CDN (só na 1ª vez)
-)
-# Cole a variável grafico_html dentro do index.html no lugar do placeholder
-print(grafico_html[:300])  # para ver como ficou
+if __name__ == "__main__":
+    fig = gerar_grafico(path=CSV_PATH)
+    injetar_no_portal(fig, html_path=INDEX_HTML, marcador=MARCADOR)
