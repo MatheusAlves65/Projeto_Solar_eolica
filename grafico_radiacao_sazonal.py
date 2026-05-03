@@ -5,7 +5,6 @@ Estação NAT | Rede SONDA | jun/2024 – mai/2025
 Gera gráfico de médias sazonais e injeta no index.html do portal.
 """
 
-import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
@@ -75,11 +74,9 @@ def preparar_medias_sazonais(df: pd.DataFrame) -> pd.DataFrame:
     for estacao in ESTACOES:
         dias_estacao = energia_diaria[energia_diaria["mes"].isin(estacao["meses"])]
         media  = dias_estacao["energia_wh"].mean().round(2)
-        desvio = dias_estacao["energia_wh"].std().round(2)
         resultados.append({
             "label":  estacao["label"],
             "media":  media,
-            "desvio": desvio,
             "cor":    estacao["cor"],
             "n_dias": len(dias_estacao),
         })
@@ -95,19 +92,10 @@ def criar_figura(medias: pd.DataFrame) -> go.Figure:
     fig.add_trace(go.Bar(
         x=medias["label"],
         y=medias["media"],
-        error_y=dict(
-            type="data",
-            array=medias["desvio"].tolist(),
-            visible=True,
-            color="rgba(255,255,255,0.4)",
-            thickness=2,
-            width=6,
-        ),
         marker_color=medias["cor"].tolist(),
         hovertemplate=(
             "<b>%{x}</b><br>"
-            "Média: %{y:.1f} Wh/m²/dia<br>"
-            "Desvio padrão: %{error_y.array:.1f} Wh/m²/dia<extra></extra>"
+            "Média: %{y:.1f} Wh/m²/dia<extra></extra>"
         ),
         name="Energia sazonal",
         width=0.5,
@@ -182,7 +170,7 @@ def gerar_grafico(path: str = CSV_PATH) -> go.Figure:
 
     print("\nMédias sazonais calculadas:")
     for _, row in medias.iterrows():
-        print(f"  {row['label'].replace(chr(10),' '):<30} {row['media']:>8.1f} Wh/m²/dia  (±{row['desvio']:.1f}, n={row['n_dias']} dias)")
+        print(f"  {row['label'].replace(chr(10),' '):<30} {row['media']:>8.1f} Wh/m²/dia  (n={row['n_dias']} dias)")
 
     return criar_figura(medias)
 
