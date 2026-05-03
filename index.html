@@ -3,117 +3,480 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Portal Solar e Eólico</title>
-<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<title>Portal Solar e Eólico — NAT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f7f6f2;--surface:#f9f8f5;--surface2:#fbfbf9;--text:#28251d;--muted:#7a7974;--border:#d4d1ca;--primary:#01696f;--shadow:0 10px 30px rgba(0,0,0,.08);--r:18px}
-[data-theme=dark]{--bg:#171614;--surface:#1c1b19;--surface2:#201f1d;--text:#cdccca;--muted:#797876;--border:#393836;--primary:#4f98a3;--shadow:0 10px 30px rgba(0,0,0,.25)}
-*{box-sizing:border-box}body{margin:0;font-family:Satoshi,system-ui,sans-serif;background:var(--bg);color:var(--text)}
-header{padding:24px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
-main{max-width:1200px;margin:0 auto;padding:20px}
-.tabs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-.tab{padding:12px 20px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-weight:600;font-size:15px}
-.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.panel{display:none}.panel.active{display:block}
-.section-title{font-size:18px;font-weight:700;margin:28px 0 12px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px;box-shadow:var(--shadow)}
-.placeholder{border:2px dashed var(--border);border-radius:var(--r);min-height:320px;display:grid;place-items:center;color:var(--muted);background:var(--surface2);font-size:14px}
-button.theme{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:600}
-small{color:var(--muted)}
+/* ── Design Tokens ─────────────────────────────────────────────────── */
+:root {
+  --bg:             #f7f6f2;
+  --surface:        #f9f8f5;
+  --surface2:       #fbfbf9;
+  --surface-off:    #f0eee9;
+  --text:           #28251d;
+  --muted:          #7a7974;
+  --faint:          #b5b3ae;
+  --border:         rgba(40,37,29,0.10);
+  --primary:        #01696f;
+  --primary-hover:  #0c4e54;
+  --primary-hl:     #cedcd8;
+  --shadow-sm:      0 1px 3px rgba(40,37,29,0.07);
+  --shadow-md:      0 4px 16px rgba(40,37,29,0.09);
+  --shadow-lg:      0 12px 36px rgba(40,37,29,0.11);
+  --r:              14px;
+  --r-sm:           8px;
+  --font-body:      'DM Sans', system-ui, sans-serif;
+  --font-mono:      'DM Mono', monospace;
+  --transition:     180ms cubic-bezier(0.16,1,0.3,1);
+}
+[data-theme=dark] {
+  --bg:             #171614;
+  --surface:        #1c1b19;
+  --surface2:       #222120;
+  --surface-off:    #1a1917;
+  --text:           #cdccca;
+  --muted:          #797876;
+  --faint:          #4a4947;
+  --border:         rgba(255,255,255,0.07);
+  --primary:        #4f98a3;
+  --primary-hover:  #70b5bf;
+  --primary-hl:     #1e3235;
+  --shadow-sm:      0 1px 3px rgba(0,0,0,0.25);
+  --shadow-md:      0 4px 16px rgba(0,0,0,0.30);
+  --shadow-lg:      0 12px 36px rgba(0,0,0,0.38);
+}
+
+/* ── Reset & Base ──────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{font-family:var(--font-body);font-size:16px;background:var(--bg);color:var(--text);line-height:1.6;min-height:100dvh}
+img,svg{display:block;max-width:100%}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
+
+/* ── Layout ────────────────────────────────────────────────────────── */
+.container{max-width:1160px;margin-inline:auto;padding-inline:24px}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+header {
+  position: sticky; top:0; z-index:100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 0 24px;
+}
+.header-inner {
+  max-width:1160px; margin-inline:auto;
+  display:flex; align-items:center; justify-content:space-between;
+  height: 64px; gap:16px;
+}
+.logo {
+  display:flex; align-items:center; gap:10px;
+}
+.logo-icon {
+  width:36px; height:36px; background:var(--primary); border-radius:10px;
+  display:grid; place-items:center; flex-shrink:0;
+}
+.logo-icon svg { color:#fff; }
+.logo-text { display:flex; flex-direction:column; line-height:1.2; }
+.logo-title { font-weight:700; font-size:15px; letter-spacing:-0.01em; }
+.logo-sub { font-size:12px; color:var(--muted); }
+.header-actions { display:flex; align-items:center; gap:10px; }
+.badge {
+  font-size:11px; font-weight:600; padding:3px 9px;
+  border-radius:999px; background:var(--primary-hl); color:var(--primary);
+  white-space:nowrap;
+}
+.btn-theme {
+  width:38px; height:38px; border-radius:999px;
+  border:1px solid var(--border); background:var(--surface2);
+  display:grid; place-items:center;
+  transition: background var(--transition), border-color var(--transition);
+}
+.btn-theme:hover { background:var(--surface-off); }
+
+/* ── Nav Tabs ──────────────────────────────────────────────────────── */
+.nav-tabs {
+  display:flex; gap:4px; padding:16px 0 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x:auto; -webkit-overflow-scrolling:touch;
+}
+.nav-tab {
+  display:flex; align-items:center; gap:7px;
+  padding:9px 18px; border-radius:var(--r-sm) var(--r-sm) 0 0;
+  font-weight:600; font-size:14px; color:var(--muted);
+  border:1px solid transparent; border-bottom:none;
+  white-space:nowrap;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+  position:relative; top:1px;
+}
+.nav-tab:hover { color:var(--text); background:var(--surface-off); }
+.nav-tab.active {
+  color:var(--primary); background:var(--surface);
+  border-color:var(--border); border-bottom-color:var(--surface);
+}
+.nav-tab .tab-icon { font-size:16px; }
+
+/* ── Main Content ──────────────────────────────────────────────────── */
+main { padding-block: 32px; }
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* ── Section Headers ───────────────────────────────────────────────── */
+.section-header {
+  display:flex; align-items:baseline; gap:12px;
+  margin: 36px 0 16px;
+}
+.section-header:first-child { margin-top:0; }
+.section-title {
+  font-size:18px; font-weight:700; letter-spacing:-0.02em;
+}
+.section-desc { font-size:13px; color:var(--muted); }
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  box-shadow:var(--shadow-md);
+  margin-bottom:20px;
+  overflow:hidden;
+}
+.card-header {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:18px 20px 12px;
+  border-bottom:1px solid var(--border);
+  gap:12px;
+}
+.card-title { font-weight:700; font-size:15px; }
+.card-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+.card-tag {
+  font-size:11px; font-weight:600; padding:3px 8px; border-radius:999px;
+  background:var(--surface2); color:var(--muted); white-space:nowrap; flex-shrink:0;
+}
+.card-body { padding:4px 0; }
+
+/* ── Placeholder ───────────────────────────────────────────────────── */
+.placeholder {
+  min-height:280px; display:grid; place-items:center;
+  color:var(--faint); font-size:13px;
+  border:2px dashed var(--border); border-radius:var(--r-sm);
+  margin:16px 20px;
+  background:var(--surface2);
+}
+.placeholder-inner { text-align:center; line-height:2; }
+.placeholder-icon { font-size:28px; margin-bottom:6px; opacity:.5; }
+
+/* ── Stat Bar ──────────────────────────────────────────────────────── */
+.stat-bar {
+  display:flex; gap:0; border-bottom:1px solid var(--border);
+  overflow-x:auto;
+}
+.stat {
+  flex:1; min-width:120px; padding:14px 20px;
+  border-right:1px solid var(--border);
+}
+.stat:last-child { border-right:none; }
+.stat-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.stat-value { font-size:22px; font-weight:700; letter-spacing:-0.03em; margin-top:2px; font-family:var(--font-mono); }
+.stat-unit { font-size:12px; font-weight:400; color:var(--muted); margin-left:3px; }
+.stat-note { font-size:11px; color:var(--faint); margin-top:1px; }
+
+/* ── Plotly override ───────────────────────────────────────────────── */
+.plotly-graph-div { min-height:360px; }
+
+/* ── Eólica placeholder ────────────────────────────────────────────── */
+.coming-soon {
+  min-height:460px; display:grid; place-items:center; text-align:center;
+  color:var(--muted);
+}
+.coming-soon h3 { font-size:20px; font-weight:700; color:var(--text); margin-bottom:8px; }
+.coming-soon p { font-size:14px; max-width:36ch; margin-inline:auto; }
+
+/* ── Responsive ────────────────────────────────────────────────────── */
+@media(max-width:640px){
+  .stat-bar { flex-wrap:wrap; }
+  .stat { flex-basis:50%; border-right:none; border-bottom:1px solid var(--border); }
+  .stat:nth-child(odd) { border-right:1px solid var(--border); }
+  .header-inner { height:56px; }
+  .badge { display:none; }
+}
 </style>
 </head>
 <body>
+
+<!-- ── Header ──────────────────────────────────────────────────────── -->
 <header>
-  <div>
-    <strong style="font-size:18px">Portal Solar e Eólico</strong><br>
-    <small>Estação NAT | jun/2024 – mai/2025</small>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </div>
+      <div class="logo-text">
+        <span class="logo-title">Portal Solar &amp; Eólico</span>
+        <span class="logo-sub">Estação NAT · Rede SONDA</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="badge">jun/2024 – mai/2025</span>
+      <button class="btn-theme" id="themeBtn" aria-label="Alternar tema">
+        <svg id="iconTheme" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </div>
   </div>
-  <button class="theme" id="themeBtn">🌙 Tema</button>
 </header>
 
+<!-- ── Nav ─────────────────────────────────────────────────────────── -->
+<div class="container">
+  <nav class="nav-tabs" role="tablist" aria-label="Módulos">
+    <button class="nav-tab active" role="tab" aria-selected="true" data-tab="solar">
+      <span class="tab-icon">☀️</span> Solar
+    </button>
+    <button class="nav-tab" role="tab" aria-selected="false" data-tab="eolica">
+      <span class="tab-icon">💨</span> Eólica
+    </button>
+  </nav>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────────────────── -->
 <main>
-  <div class="tabs">
-    <button class="tab active" data-tab="solar">☀️ Solar</button>
-    <button class="tab" data-tab="eolica">💨 Eólica</button>
-  </div>
+  <div class="container">
 
-  <!-- ── ABA SOLAR ─────────────────────────────────────────────────────── -->
-  <section class="panel active" id="solar">
+    <!-- ══ ABA SOLAR ════════════════════════════════════════════════ -->
+    <section class="panel active" id="solar" role="tabpanel" aria-label="Solar">
 
-    <h2 class="section-title">Irradiação Global Horizontal</h2>
+      <!-- Stat bar com valores reais do dataset -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="stat-bar">
+          <div class="stat">
+            <div class="stat-label">Período</div>
+            <div class="stat-value" style="font-size:17px">12 meses</div>
+            <div class="stat-note">jun/2024 – mai/2025</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Pico mensal</div>
+            <div class="stat-value">7117<span class="stat-unit">Wh/m²</span></div>
+            <div class="stat-note">Out/2024</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Menor mês</div>
+            <div class="stat-value">5042<span class="stat-unit">Wh/m²</span></div>
+            <div class="stat-note">Jun/2024</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Média anual</div>
+            <div class="stat-value">6120<span class="stat-unit">Wh/m²</span></div>
+            <div class="stat-note">média diária do período</div>
+          </div>
+        </div>
+      </div>
 
-    <div class="card">
-      <strong>Médias horárias mensais — Radiação Global</strong><br>
-      <small>glo_avg ≥ 0 W/m² | Média minuto a minuto por hora e mês</small>
-      <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+      <!-- Seção: Irradiação Global Horizontal -->
+      <div class="section-header">
+        <h2 class="section-title">Irradiação Global Horizontal</h2>
+        <span class="section-desc">glo_avg · valores negativos desconsiderados</span>
+      </div>
+
+      <!-- Card 1: Energia mensal (Wh/m²/dia) -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Energia Diária Média por Mês</div>
+            <div class="card-meta">Σ(glo_avg) ÷ 60 por dia → média do mês · Wh/m²/dia</div>
+          </div>
+          <span class="card-tag">Mensal</span>
+        </div>
+        <div class="card-body">
+          <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="2ceb4e83-4888-426e-a5f7-d2bc27f14f16" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("2ceb4e83-4888-426e-a5f7-d2bc27f14f16")) {                    Plotly.newPlot(                        "2ceb4e83-4888-426e-a5f7-d2bc27f14f16",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eEnergia: %{y:.1f} Wh\u002fm²\u002fdia\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":["rgb(0,56,176)","rgb(15,70,183)","rgb(31,85,190)","rgb(47,99,197)","rgb(62,114,204)","rgb(78,128,211)","rgb(94,143,219)","rgb(110,157,226)","rgb(125,172,233)","rgb(141,186,240)","rgb(157,201,247)","rgb(173,216,255)"]},"name":"Média mensal","x":["Jun\u002f24","Jul\u002f24","Ago\u002f24","Set\u002f24","Out\u002f24","Nov\u002f24","Dez\u002f24","Jan\u002f25","Fev\u002f25","Mar\u002f25","Abr\u002f25","Mai\u002f25"],"y":[5041.67,5185.31,6042.24,6553.25,7116.61,7018.48,6705.93,6431.18,6445.64,6106.06,6140.12,5653.74],"type":"bar"},{"hoverinfo":"skip","line":{"color":"rgba(255,255,255,0.5)","dash":"dot","width":1.5},"marker":{"color":"white","size":6},"mode":"lines+markers","name":"Tendência","showlegend":false,"x":["Jun\u002f24","Jul\u002f24","Ago\u002f24","Set\u002f24","Out\u002f24","Nov\u002f24","Dez\u002f24","Jan\u002f25","Fev\u002f25","Mar\u002f25","Abr\u002f25","Mai\u002f25"],"y":[5041.67,5185.31,6042.24,6553.25,7116.61,7018.48,6705.93,6431.18,6445.64,6106.06,6140.12,5653.74],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Energia Diária Média — Radiação Global Horizontal\u003cbr\u003e\u003cspan style='font-size:14px;font-weight:normal;color:gray'\u003eEstação NAT | jun\u002f2024 – mai\u002f2025 | Energia diária média\u003c\u002fspan\u003e","x":0.5,"xanchor":"center"},"xaxis":{"title":{"text":"Mês"},"gridcolor":"#262523","color":"#797876"},"yaxis":{"title":{"text":"Energia média diária (Wh\u002fm²\u002fdia)"},"gridcolor":"#262523","color":"#797876"},"font":{"family":"sans-serif","color":"#cdccca"},"margin":{"t":130,"b":60,"l":60,"r":20},"plot_bgcolor":"#1c1b19","paper_bgcolor":"#171614","bargap":0.25,"showlegend":false},                        {"responsive": true}                    )                };            </script>        </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Média horária por mês (linhas) -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Perfil Horário por Mês</div>
+            <div class="card-meta">Média minuto a minuto agrupada por hora · W/m²</div>
+          </div>
+          <span class="card-tag">Horário</span>
+        </div>
+        <div class="card-body">
+          <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
         <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="fbd83743-4007-4094-887e-38c46dab74e1" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("fbd83743-4007-4094-887e-38c46dab74e1")) {                    Plotly.newPlot(                        "fbd83743-4007-4094-887e-38c46dab74e1",                        [{"hovertemplate":"Jun\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(0,56,176)","width":2.5},"mode":"lines","name":"Jun\u002f24","x":{"dtype":"i4","bdata":"AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAgAAAAJAAAACgAAAAsAAAAMAAAADQAAAA4AAAAPAAAAEAAAABEAAAASAAAAEwAAABQAAAAVAAAAFgAAABcAAAA="},"y":{"dtype":"f8","bdata":"9ihcj8L12D8K16NwPQrHP6RwPQrXo9A\u002fmpmZmZmZqT97FK5H4XqUP8P1KFyPwsU\u002f7FG4HoXr0T+kcD0K16MsQAAAAAAAQFtACtejcD3uckBxPQrXowx9QK5H4XoUWINACtejcD1ShkCuR+F6FHiHQGZmZmZm2IVASOF6FK4Ng0B7FK5H4ZZ7QB+F61G4zm9ASOF6FK4nVUA9CtejcD0bQHsUrkfherQ\u002fFK5H4XoU5j\u002fXo3A9CtfTPw=="},"type":"scatter"},{"hovertemplate":"Jul\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(15,70,183)","width":2.5},"mode":"lines","name":"Jul\u002f24","x":{"dtype":"i4","bdata":"AQAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAAFwAAAA=="},"y":{"dtype":"f8","bdata":"exSuR+F6lD+4HoXrUbiuP5qZmZmZmck\u002fexSuR+F6xD8K16NwPQrHP2ZmZmZmZiRAH4XrUbhOWkAAAAAAAPhwQKRwPQrXb3pAcT0K16PUgUDNzMzMzDSHQFK4HoXr6YdAhetRuB71hkB7FK5H4ayDQM3MzMzMDH9ApHA9CtfPc0D2KFyPwiVdQEjhehSuxyRACtejcD0Kxz8="},"type":"scatter"},{"hovertemplate":"Ago\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(31,85,190)","width":2.5},"mode":"lines","name":"Ago\u002f24","x":{"dtype":"i4","bdata":"CAAAAAkAAAAKAAAACwAAAAwAAAANAAAADgAAAA8AAAAQAAAAEQAAABIAAAATAAAAFAAAAA=="},"y":{"dtype":"f8","bdata":"w\u002fUoXI\u002fCLEBxPQrXo8BfQHE9CtejwHRAuB6F61FKgEAK16NwPWKGQI\u002fC9Shc34lApHA9Ctf1i0CkcD0K17eKQJqZmZmZx4ZAcT0K16OWgUBmZmZmZsZ0QGZmZmZmTmBAmpmZmZmZKEA="},"type":"scatter"},{"hovertemplate":"Set\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(47,99,197)","width":2.5},"mode":"lines","name":"Set\u002f24","x":{"dtype":"i4","bdata":"BwAAAAgAAAAJAAAACgAAAAsAAAAMAAAADQAAAA4AAAAPAAAAEAAAABEAAAASAAAAEwAAABQAAAA="},"y":{"dtype":"f8","bdata":"w\u002fUoXI\u002fCxT8zMzMzMxNCQMP1KFyPkmVAuB6F61Gwd0BmZmZmZsqDQFyPwvUoBIlAKVyPwvUwjUA9CtejcOmNQK5H4XoUqoxAuB6F61EaiEAzMzMzM32CQGZmZmZm4nVAexSuR+F6XUDNzMzMzEwkQA=="},"type":"scatter"},{"hovertemplate":"Out\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(62,114,204)","width":2.5},"mode":"lines","name":"Out\u002f24","x":{"dtype":"i4","bdata":"BwAAAAgAAAAJAAAACgAAAAsAAAAMAAAADQAAAA4AAAAPAAAAEAAAABEAAAASAAAAEwAAABQAAAA="},"y":{"dtype":"f8","bdata":"4XoUrkfh+j8K16NwPUpPQFK4HoXrGW5ACtejcD32e0D2KFyPwj+GQKRwPQrXt4tAAAAAAAAKj0BSuB6F6wSQQAAAAAAAso1Aj8L1KFztiECF61G4HgeCQD0K16NwDXRA16NwPQqHWUBSuB6F61EdQA=="},"type":"scatter"},{"hovertemplate":"Nov\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(78,128,211)","width":2.5},"mode":"lines","name":"Nov\u002f24","x":{"dtype":"i4","bdata":"BwAAAAgAAAAJAAAACgAAAAsAAAAMAAAADQAAAA4AAAAPAAAAEAAAABEAAAASAAAAEwAAABQAAAA="},"y":{"dtype":"f8","bdata":"MzMzMzMzBUAfhetRuO5SQFK4HoXrwW5ASOF6FK73fEAUrkfheiqGQNejcD0K84pAw\u002fUoXI+2jUBI4XoUrtWOQBSuR+F6QI1Aj8L1KFyPiEDhehSuR8+BQMP1KFyPznNAmpmZmZlpW0AK16NwPQokQA=="},"type":"scatter"},{"hovertemplate":"Dez\u002f24\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(94,143,219)","width":2.5},"mode":"lines","name":"Dez\u002f24","x":{"dtype":"i4","bdata":"AAAAAAEAAAACAAAABQAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAA"},"y":{"dtype":"f8","bdata":"exSuR+F6hD+4HoXrUbieP7gehetRuK4\u002fuB6F61G4rj+PwvUoXI\u002fyP65H4XoUzkVAPQrXo3A9aUB7FK5H4d54QB+F61G44IJAH4XrUbhgiUBxPQrXo9yMQHE9CtejzI1ACtejcD02jECamZmZmQeIQJqZmZmZY4JAMzMzMzMLdkCkcD0K19NhQBSuR+F6FDNA"},"type":"scatter"},{"hovertemplate":"Jan\u002f25\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(110,157,226)","width":2.5},"mode":"lines","name":"Jan\u002f25","x":{"dtype":"i4","bdata":"AgAAAAMAAAAEAAAABQAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAA"},"y":{"dtype":"f8","bdata":"16NwPQrX0z\u002fsUbgehevBP5qZmZmZmbk\u002fZmZmZmZm1j97FK5H4Xq0Pz0K16NwfThA7FG4HoVzYUCuR+F6FEZ1QK5H4XoU1oBACtejcD18h0Bcj8L1KKSLQClcj8L1votAUrgehevTikBI4XoUrnGIQJqZmZmZdYNA4XoUrkcNeUB7FK5H4VpmQB+F61G4njtA"},"type":"scatter"},{"hovertemplate":"Fev\u002f25\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(125,172,233)","width":2.5},"mode":"lines","name":"Fev\u002f25","x":{"dtype":"i4","bdata":"AAAAAAEAAAACAAAAAwAAAAUAAAAGAAAACAAAAAkAAAAKAAAACwAAAAwAAAANAAAADgAAAA8AAAAQAAAAEQAAABIAAAATAAAAFAAAABYAAAAXAAAA"},"y":{"dtype":"f8","bdata":"mpmZmZmZqT8pXI\u002fC9SjMP83MzMzMzNw\u002fexSuR+F6xD8pXI\u002fC9SjMP6RwPQrXo8A\u002fZmZmZmZmMECamZmZmRFgQGZmZmZm\u002fnNASOF6FK59gUBcj8L1KECHQB+F61G4yItAMzMzMzNJjUDD9Shcj6qLQArXo3A9CIlAXI\u002fC9SgSg0BI4XoUrlt3QMP1KFyPAmRAMzMzMzOzPEAK16NwPQq3PwrXo3A9Crc\u002f"},"type":"scatter"},{"hovertemplate":"Mar\u002f25\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(141,186,240)","width":2.5},"mode":"lines","name":"Mar\u002f25","x":{"dtype":"i4","bdata":"AAAAAAEAAAADAAAABgAAAAgAAAAJAAAACgAAAAsAAAAMAAAADQAAAA4AAAAPAAAAEAAAABEAAAASAAAAEwAAABQAAAAXAAAA"},"y":{"dtype":"f8","bdata":"KVyPwvUozD+4HoXrUbiePzMzMzMzM8M\u002fexSuR+F6lD\u002fsUbgehWszQOxRuB6Fy2BAMzMzMzOvdECF61G4HnOBQJqZmZmZjYZApHA9Ctd5ikBcj8L1KCqLQI\u002fC9Shcr4lAj8L1KFxnhkA9CtejcG2BQM3MzMzMhHZAw\u002fUoXI\u002fyY0CuR+F6FK4zQKRwPQrXo8A\u002f"},"type":"scatter"},{"hovertemplate":"Abr\u002f25\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(157,201,247)","width":2.5},"mode":"lines","name":"Abr\u002f25","x":{"dtype":"i4","bdata":"AwAAAAgAAAAJAAAACgAAAAsAAAAMAAAADQAAAA4AAAAPAAAAEAAAABEAAAASAAAAEwAAABQAAAA="},"y":{"dtype":"f8","bdata":"CtejcD0Ktz8fhetRuB42QHsUrkfhimFAAAAAAAB4dUDD9Shcj9KBQMP1KFyP8IdA16NwPQrdikDXo3A9CumLQEjhehSuo4pAcT0K16NghkApXI\u002fC9ViAQD0K16NwpXRA16NwPQqnXkBxPQrXo3AnQA=="},"type":"scatter"},{"hovertemplate":"Mai\u002f25\u003cbr\u003eHora: %{x}:00 UTC\u003cbr\u003eglo_avg: %{y:.0f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","line":{"color":"rgb(173,216,255)","width":2.5},"mode":"lines","name":"Mai\u002f25","x":{"dtype":"i4","bdata":"AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAcAAAAIAAAACQAAAAoAAAALAAAADAAAAA0AAAAOAAAADwAAABAAAAARAAAAEgAAABMAAAAUAAAAFQAAABYAAAAXAAAA"},"y":{"dtype":"f8","bdata":"uB6F61G4rj+4HoXrUbiuP3E9CtejcN0\u002fAAAAAAAA0D+amZmZmZm5P7gehetRuJ4\u002fexSuR+F6pD8pXI\u002fC9SjMP3sUrkfhejBAZmZmZmYWYUCamZmZmelzQArXo3A9MIBAPQrXo3D5hUDXo3A9CqeIQAAAAAAANolAXI\u002fC9Sjsh0Bcj8L1KDSFQJqZmZmZrX9AUrgehes5c0BSuB6F62FaQGZmZmZmZh1ACtejcD0Ktz8K16NwPQrHP7gehetRuJ4\u002f"},"type":"scatter"}],                        {"font":{"color":"#cdccca","family":"sans-serif"},"hovermode":"x unified","legend":{"font":{"size":12},"orientation":"h","x":0.5,"xanchor":"center","y":-0.28,"yanchor":"bottom"},"margin":{"b":100,"l":60,"r":20,"t":160},"paper_bgcolor":"#171614","plot_bgcolor":"#1c1b19","title":{"text":"Média Horária de Radiação Global por Mês\u003cbr\u003e\u003cspan style='font-size:14px;font-weight:normal;color:gray'\u003eEstação NAT | jun\u002f2024 – mai\u002f2025 | glo_avg ≥ 0 W\u002fm²\u003c\u002fspan\u003e","x":0.5,"xanchor":"center"},"updatemenus":[{"bgcolor":"#1c1b19","bordercolor":"#393836","buttons":[{"args":[{"visible":[true,true,true,true,true,true,true,true,true,true,true,true]}],"label":"Todos","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,false,false,false,false,false,false]}],"label":"Nenhum","method":"update"},{"args":[{"visible":[true,false,false,false,false,false,false,false,false,false,false,false]}],"label":"Jun\u002f24","method":"update"},{"args":[{"visible":[false,true,false,false,false,false,false,false,false,false,false,false]}],"label":"Jul\u002f24","method":"update"},{"args":[{"visible":[false,false,true,false,false,false,false,false,false,false,false,false]}],"label":"Ago\u002f24","method":"update"},{"args":[{"visible":[false,false,false,true,false,false,false,false,false,false,false,false]}],"label":"Set\u002f24","method":"update"},{"args":[{"visible":[false,false,false,false,true,false,false,false,false,false,false,false]}],"label":"Out\u002f24","method":"update"},{"args":[{"visible":[false,false,false,false,false,true,false,false,false,false,false,false]}],"label":"Nov\u002f24","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,true,false,false,false,false,false]}],"label":"Dez\u002f24","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,false,true,false,false,false,false]}],"label":"Jan\u002f25","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,false,false,true,false,false,false]}],"label":"Fev\u002f25","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,false,false,false,true,false,false]}],"label":"Mar\u002f25","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,false,false,false,false,true,false]}],"label":"Abr\u002f25","method":"update"},{"args":[{"visible":[false,false,false,false,false,false,false,false,false,false,false,true]}],"label":"Mai\u002f25","method":"update"}],"direction":"right","font":{"color":"#cdccca","size":12},"pad":{"b":4,"l":4,"r":4,"t":4},"showactive":true,"type":"buttons","x":0.5,"xanchor":"center","y":1.18,"yanchor":"top"}],"xaxis":{"color":"#797876","dtick":1,"gridcolor":"#262523","range":[0,23],"tickmode":"linear","ticktext":["00:00","01:00","02:00","03:00","04:00","05:00","06:00","07:00","08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00","19:00","20:00","21:00","22:00","23:00"],"tickvals":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23],"title":{"text":"Hora (UTC)"}},"yaxis":{"color":"#797876","gridcolor":"#262523","title":{"text":"glo_avg (W\u002fm²)"}},"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}}},                        {"responsive": true}                    )                };            </script>        </div>
-    </div>
+        </div>
+      </div>
 
-    <div class="card">
-      <strong><div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
-        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="793a1a31-75d4-496c-9b97-7c8aef65fe7f" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("793a1a31-75d4-496c-9b97-7c8aef65fe7f")) {                    Plotly.newPlot(                        "793a1a31-75d4-496c-9b97-7c8aef65fe7f",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eMédia: %{y:.1f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":["rgb(0,56,176)","rgb(15,70,183)","rgb(31,85,190)","rgb(47,99,197)","rgb(62,114,204)","rgb(78,128,211)","rgb(94,143,219)","rgb(110,157,226)","rgb(125,172,233)","rgb(141,186,240)","rgb(157,201,247)","rgb(173,216,255)"]},"name":"Média mensal","x":["Jun\u002f24","Jul\u002f24","Ago\u002f24","Set\u002f24","Out\u002f24","Nov\u002f24","Dez\u002f24","Jan\u002f25","Fev\u002f25","Mar\u002f25","Abr\u002f25","Mai\u002f25"],"y":[412.69,422.48,492.02,539.42,565.9,550.76,521.4,503.34,507.29,490.68,498.89,450.78],"type":"bar"},{"hoverinfo":"skip","line":{"color":"rgba(255,255,255,0.5)","dash":"dot","width":1.5},"marker":{"color":"white","size":6},"mode":"lines+markers","name":"Tendência","showlegend":false,"x":["Jun\u002f24","Jul\u002f24","Ago\u002f24","Set\u002f24","Out\u002f24","Nov\u002f24","Dez\u002f24","Jan\u002f25","Fev\u002f25","Mar\u002f25","Abr\u002f25","Mai\u002f25"],"y":[412.69,422.48,492.02,539.42,565.9,550.76,521.4,503.34,507.29,490.68,498.89,450.78],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Médias Mensais de Radiação Global Horizontal\u003cbr\u003e\u003cspan style='font-size:14px;font-weight:normal;color:gray'\u003eEstação NAT | jun\u002f2024 – mai\u002f2025 | glo_avg ≥ 0 W\u002fm²\u003c\u002fspan\u003e","x":0.5,"xanchor":"center"},"xaxis":{"title":{"text":"Mês"},"gridcolor":"#262523","color":"#797876"},"yaxis":{"title":{"text":"glo_avg médio (W\u002fm²)"},"gridcolor":"#262523","color":"#797876"},"font":{"family":"sans-serif","color":"#cdccca"},"margin":{"t":130,"b":60,"l":60,"r":20},"plot_bgcolor":"#1c1b19","paper_bgcolor":"#171614","bargap":0.25,"showlegend":false},                        {"responsive": true}                    )                };            </script>        </div></strong><br>
-      <small>Em breve</small>
-      <div class="placeholder"></div>
-    </div>
+      <!-- Card 3: Médias mensais W/m² -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Médias Mensais — W/m²</div>
+            <div class="card-meta">Média de glo_avg por mês · W/m²</div>
+          </div>
+          <span class="card-tag">Mensal</span>
+        </div>
+        <div class="card-body">
+          <div>                        <script>window.PlotlyConfig = {MathJaxConfig: 'local'};</script>
+        <script charset="utf-8" src="https://cdn.plot.ly/plotly-3.5.0.min.js" integrity="sha256-fHbNLP+GlIXN+efbQec78UkemUz3NJp7UmfGxC1tNxs=" crossorigin="anonymous"></script>                <div id="793a1a31-75d4-496c-9b97-7c8aef65fe7f" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("793a1a31-75d4-496c-9b97-7c8aef65fe7f")) {                    Plotly.newPlot(                        "793a1a31-75d4-496c-9b97-7c8aef65fe7f",                        [{"hovertemplate":"\u003cb\u003e%{x}\u003c\u002fb\u003e\u003cbr\u003eMédia: %{y:.1f} W\u002fm²\u003cextra\u003e\u003c\u002fextra\u003e","marker":{"color":["rgb(0,56,176)","rgb(15,70,183)","rgb(31,85,190)","rgb(47,99,197)","rgb(62,114,204)","rgb(78,128,211)","rgb(94,143,219)","rgb(110,157,226)","rgb(125,172,233)","rgb(141,186,240)","rgb(157,201,247)","rgb(173,216,255)"]},"name":"Média mensal","x":["Jun\u002f24","Jul\u002f24","Ago\u002f24","Set\u002f24","Out\u002f24","Nov\u002f24","Dez\u002f24","Jan\u002f25","Fev\u002f25","Mar\u002f25","Abr\u002f25","Mai\u002f25"],"y":[412.69,422.48,492.02,539.42,565.9,550.76,521.4,503.34,507.29,490.68,498.89,450.78],"type":"bar"},{"hoverinfo":"skip","line":{"color":"rgba(255,255,255,0.5)","dash":"dot","width":1.5},"marker":{"color":"white","size":6},"mode":"lines+markers","name":"Tendência","showlegend":false,"x":["Jun\u002f24","Jul\u002f24","Ago\u002f24","Set\u002f24","Out\u002f24","Nov\u002f24","Dez\u002f24","Jan\u002f25","Fev\u002f25","Mar\u002f25","Abr\u002f25","Mai\u002f25"],"y":[412.69,422.48,492.02,539.42,565.9,550.76,521.4,503.34,507.29,490.68,498.89,450.78],"type":"scatter"}],                        {"template":{"data":{"histogram2dcontour":[{"type":"histogram2dcontour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"choropleth":[{"type":"choropleth","colorbar":{"outlinewidth":0,"ticks":""}}],"histogram2d":[{"type":"histogram2d","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"heatmap":[{"type":"heatmap","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"contourcarpet":[{"type":"contourcarpet","colorbar":{"outlinewidth":0,"ticks":""}}],"contour":[{"type":"contour","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"surface":[{"type":"surface","colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]}],"mesh3d":[{"type":"mesh3d","colorbar":{"outlinewidth":0,"ticks":""}}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"parcoords":[{"type":"parcoords","line":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolargl":[{"type":"scatterpolargl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"scattergeo":[{"type":"scattergeo","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterpolar":[{"type":"scatterpolar","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"scattergl":[{"type":"scattergl","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatter3d":[{"type":"scatter3d","line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermap":[{"type":"scattermap","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattermapbox":[{"type":"scattermapbox","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scatterternary":[{"type":"scatterternary","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"scattercarpet":[{"type":"scattercarpet","marker":{"colorbar":{"outlinewidth":0,"ticks":""}}}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}],"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"pie":[{"automargin":true,"type":"pie"}]},"layout":{"autotypenumbers":"strict","colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"hovermode":"closest","hoverlabel":{"align":"left"},"paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"bgcolor":"#E5ECF6","angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"ternary":{"bgcolor":"#E5ECF6","aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]]},"xaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"yaxis":{"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","automargin":true,"zerolinewidth":2},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white","gridwidth":2}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"geo":{"bgcolor":"white","landcolor":"#E5ECF6","subunitcolor":"white","showland":true,"showlakes":true,"lakecolor":"white"},"title":{"x":0.05},"mapbox":{"style":"light"}}},"title":{"text":"Médias Mensais de Radiação Global Horizontal\u003cbr\u003e\u003cspan style='font-size:14px;font-weight:normal;color:gray'\u003eEstação NAT | jun\u002f2024 – mai\u002f2025 | glo_avg ≥ 0 W\u002fm²\u003c\u002fspan\u003e","x":0.5,"xanchor":"center"},"xaxis":{"title":{"text":"Mês"},"gridcolor":"#262523","color":"#797876"},"yaxis":{"title":{"text":"glo_avg médio (W\u002fm²)"},"gridcolor":"#262523","color":"#797876"},"font":{"family":"sans-serif","color":"#cdccca"},"margin":{"t":130,"b":60,"l":60,"r":20},"plot_bgcolor":"#1c1b19","paper_bgcolor":"#171614","bargap":0.25,"showlegend":false},                        {"responsive": true}                    )                };            </script>        </div>
+        </div>
+      </div>
 
-    <div class="card">
-      <strong>Médias sazonais — Radiação Global</strong><br>
-      <small>Opcional | Em breve</small>
-      <div class="placeholder">Gráfico em construção</div>
-    </div>
+      <!-- Card 4: Sazonal (marcador) -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Energia por Estação do Ano</div>
+            <div class="card-meta">Hemisfério Sul · Média Wh/m²/dia + desvio padrão</div>
+          </div>
+          <span class="card-tag">Sazonal</span>
+        </div>
+        <div class="card-body">
+          <!-- GRAFICO_RADIACAO_SAZONAL -->
+          <div class="placeholder">
+            <div class="placeholder-inner">
+              <div class="placeholder-icon">📊</div>
+              Execute <code>python grafico_radiacao_sazonal.py</code>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <h2 class="section-title">Temperatura Ambiente</h2>
+      <!-- Seção: Temperatura Ambiente -->
+      <div class="section-header">
+        <h2 class="section-title">Temperatura Ambiente</h2>
+        <span class="section-desc">Em construção</span>
+      </div>
 
-    <div class="card">
-      <strong>Médias horárias mensais — Temperatura</strong><br>
-      <small>Em breve</small>
-      <div class="placeholder">Gráfico em construção</div>
-    </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Médias Horárias Mensais — Temperatura</div>
+            <div class="card-meta">Em breve</div>
+          </div>
+          <span class="card-tag">Em breve</span>
+        </div>
+        <div class="card-body">
+          <div class="placeholder">
+            <div class="placeholder-inner">
+              <div class="placeholder-icon">🌡️</div>
+              Gráfico em construção
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="card">
-      <strong>Médias mensais — Temperatura</strong><br>
-      <small>Em breve</small>
-      <div class="placeholder">Gráfico em construção</div>
-    </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Médias Mensais — Temperatura</div>
+            <div class="card-meta">Em breve</div>
+          </div>
+          <span class="card-tag">Em breve</span>
+        </div>
+        <div class="card-body">
+          <div class="placeholder">
+            <div class="placeholder-inner">
+              <div class="placeholder-icon">🌡️</div>
+              Gráfico em construção
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <div class="card">
-      <strong>Médias sazonais — Temperatura</strong><br>
-      <small>Opcional | Em breve</small>
-      <div class="placeholder">Gráfico em construção</div>
-    </div>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Médias Sazonais — Temperatura</div>
+            <div class="card-meta">Em breve</div>
+          </div>
+          <span class="card-tag">Em breve</span>
+        </div>
+        <div class="card-body">
+          <div class="placeholder">
+            <div class="placeholder-inner">
+              <div class="placeholder-icon">🌡️</div>
+              Gráfico em construção
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <h2 class="section-title">Carta Solar</h2>
-    <div class="card">
-      <strong>Carta Solar — Natal/RN</strong><br>
-      <small>Em breve</small>
-      <div class="placeholder">Carta solar em construção</div>
-    </div>
+      <!-- Seção: Carta Solar -->
+      <div class="section-header">
+        <h2 class="section-title">Carta Solar</h2>
+        <span class="section-desc">Natal/RN</span>
+      </div>
 
-  </section>
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Carta Solar — Natal/RN</div>
+            <div class="card-meta">Em breve</div>
+          </div>
+          <span class="card-tag">Em breve</span>
+        </div>
+        <div class="card-body">
+          <div class="placeholder">
+            <div class="placeholder-inner">
+              <div class="placeholder-icon">🌐</div>
+              Carta solar em construção
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <!-- ── ABA EÓLICA ────────────────────────────────────────────────────── -->
-  <section class="panel" id="eolica">
-    <div class="card">
-      <h2>Análise Eólica</h2>
-      <div class="placeholder" style="min-height:400px">⚙️ Conteúdo eólico em construção</div>
-    </div>
-  </section>
+    </section>
+
+    <!-- ══ ABA EÓLICA ════════════════════════════════════════════════ -->
+    <section class="panel" id="eolica" role="tabpanel" aria-label="Eólica">
+      <div class="card" style="padding:0">
+        <div class="coming-soon">
+          <div>
+            <div style="font-size:48px;margin-bottom:16px">💨</div>
+            <h3>Análise Eólica</h3>
+            <p>Conteúdo em construção. Em breve os gráficos de velocidade e direção do vento.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
 </main>
 
 <script>
-document.querySelectorAll('.tab').forEach(btn =>
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+// ── Tema ──────────────────────────────────────────────────────────────
+const html = document.documentElement;
+const btn  = document.getElementById('themeBtn');
+const icon = document.getElementById('iconTheme');
+
+const MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+const SUN  = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
+
+let theme = matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+function applyTheme(t) {
+  html.dataset.theme = t;
+  icon.innerHTML = t === 'dark' ? SUN : MOON;
+  btn.setAttribute('aria-label', t === 'dark' ? 'Modo claro' : 'Modo escuro');
+}
+applyTheme(theme);
+btn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(theme); });
+
+// ── Tabs ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
-  })
-);
-document.getElementById('themeBtn').onclick = () => {
-  const h = document.documentElement;
-  h.dataset.theme = h.dataset.theme === 'dark' ? 'light' : 'dark';
-};
-document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected','true');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+  });
+});
 </script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 """
-Radiação Global — Médias Mensais
+Radiação Global — Médias Sazonais (Wh/m²/dia)
 Estação NAT | Rede SONDA | jun/2024 – mai/2025
 
-Gera o gráfico de médias mensais e injeta no index.html do portal.
+Gera gráfico de médias sazonais e injeta no index.html do portal.
 """
 
 import numpy as np
@@ -15,26 +15,32 @@ CSV_PATH   = "base_sonda_com_temperaturas_A304_SBNT_2024-06_a_2025-05.csv"
 CSV_SEP    = ";"
 COLUNA     = "glo_avg"
 INDEX_HTML = "index.html"
-MARCADOR   = "Médias horárias mensais — Radiação Global"
+MARCADOR   = "<!-- GRAFICO_RADIACAO_SAZONAL -->"
 
-LABELS_MESES = {
-    "2024-06": "Jun/24", "2024-07": "Jul/24", "2024-08": "Ago/24",
-    "2024-09": "Set/24", "2024-10": "Out/24", "2024-11": "Nov/24",
-    "2024-12": "Dez/24", "2025-01": "Jan/25", "2025-02": "Fev/25",
-    "2025-03": "Mar/25", "2025-04": "Abr/25", "2025-05": "Mai/25",
-}
-
-# ── Gradiente azul ───────────────────────────────────────────────────────────
-
-def gerar_gradiente_azul(n: int) -> list[str]:
-    azul_intenso = np.array([0, 56, 176])
-    azul_claro   = np.array([173, 216, 255])
-    cores = []
-    for i in range(n):
-        t   = i / max(n - 1, 1)
-        rgb = (1 - t) * azul_intenso + t * azul_claro
-        cores.append(f"rgb({int(rgb[0])},{int(rgb[1])},{int(rgb[2])})")
-    return cores
+# Estações do Hemisfério Sul — datas exatas do período
+# Cada tupla: (label_exibição, [meses incluídos], cor)
+ESTACOES = [
+    {
+        "label":  "Inverno\n(jun–ago/24)",
+        "meses":  ["2024-06", "2024-07", "2024-08"],
+        "cor":    "rgb(70, 130, 200)",   # azul frio
+    },
+    {
+        "label":  "Primavera\n(set–nov/24)",
+        "meses":  ["2024-09", "2024-10", "2024-11"],
+        "cor":    "rgb(100, 180, 100)",  # verde
+    },
+    {
+        "label":  "Verão\n(dez/24–fev/25)",
+        "meses":  ["2024-12", "2025-01", "2025-02"],
+        "cor":    "rgb(230, 140, 50)",   # laranja quente
+    },
+    {
+        "label":  "Outono\n(mar–mai/25)",
+        "meses":  ["2025-03", "2025-04", "2025-05"],
+        "cor":    "rgb(180, 100, 60)",   # terra
+    },
+]
 
 # ── Pipeline de dados ────────────────────────────────────────────────────────
 
@@ -45,79 +51,94 @@ def carregar_dados(path: str, sep: str) -> pd.DataFrame:
     return df
 
 
-def preparar_medias_mensais(df: pd.DataFrame) -> pd.DataFrame:
+def preparar_medias_sazonais(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Calcula a energia diária (Wh/m²) e a média mensal dessas energias.
-    Cada registro = 1 minuto → divide por 60 para converter W/m² em Wh/m².
+    Para cada estação:
+      1. Filtra os meses da estação
+      2. Calcula energia diária (Wh/m²/dia) = Σ(glo_avg) / 60
+      3. Tira a média de todos os dias da estação
     """
     df = df[df[COLUNA] >= 0].copy()
     df["mes"] = df["timestamp_utc"].dt.to_period("M").astype(str)
     df["dia"] = df["timestamp_utc"].dt.date
 
-    # Soma diária: Σ(glo_avg) / 60  →  Wh/m² por dia
+    # Energia por dia (todos os meses)
     energia_diaria = (
         df.groupby(["mes", "dia"])[COLUNA]
         .sum()
         .div(60)
-        .round(2)
         .reset_index()
     )
     energia_diaria.columns = ["mes", "dia", "energia_wh"]
 
-    # Média mensal das energias diárias (Wh/m²/dia)
-    medias_mensais = (
-        energia_diaria.groupby("mes")["energia_wh"]
-        .mean()
-        .round(2)
-        .reset_index()
-    )
-    medias_mensais.columns = ["mes", "media"]
-    return medias_mensais
+    resultados = []
+    for estacao in ESTACOES:
+        dias_estacao = energia_diaria[energia_diaria["mes"].isin(estacao["meses"])]
+        media  = dias_estacao["energia_wh"].mean().round(2)
+        desvio = dias_estacao["energia_wh"].std().round(2)
+        resultados.append({
+            "label":  estacao["label"],
+            "media":  media,
+            "desvio": desvio,
+            "cor":    estacao["cor"],
+            "n_dias": len(dias_estacao),
+        })
+
+    return pd.DataFrame(resultados)
 
 # ── Plotly ───────────────────────────────────────────────────────────────────
 
 def criar_figura(medias: pd.DataFrame) -> go.Figure:
-    meses  = sorted(medias["mes"].unique())
-    labels = [LABELS_MESES.get(m, m) for m in meses]
-    valores = [medias.loc[medias["mes"] == m, "media"].values[0] for m in meses]
-    cores  = gerar_gradiente_azul(len(meses))
-
     fig = go.Figure()
 
-    # Barras coloridas por mês
+    # Barras por estação
     fig.add_trace(go.Bar(
-        x=labels,
-        y=valores,
-        marker_color=cores,
-        hovertemplate="<b>%{x}</b><br>Energia: %{y:.1f} Wh/m²/dia<extra></extra>",
-        name="Média mensal",
+        x=medias["label"],
+        y=medias["media"],
+        error_y=dict(
+            type="data",
+            array=medias["desvio"].tolist(),
+            visible=True,
+            color="rgba(255,255,255,0.4)",
+            thickness=2,
+            width=6,
+        ),
+        marker_color=medias["cor"].tolist(),
+        hovertemplate=(
+            "<b>%{x}</b><br>"
+            "Média: %{y:.1f} Wh/m²/dia<br>"
+            "Desvio padrão: %{error_y.array:.1f} Wh/m²/dia<extra></extra>"
+        ),
+        name="Energia sazonal",
+        width=0.5,
     ))
 
-    # Linha de tendência por cima
-    fig.add_trace(go.Scatter(
-        x=labels,
-        y=valores,
-        mode="lines+markers",
-        line=dict(color="rgba(255,255,255,0.5)", width=1.5, dash="dot"),
-        marker=dict(size=6, color="white"),
-        hoverinfo="skip",
-        name="Tendência",
-        showlegend=False,
-    ))
+    # Linha de média geral do período
+    media_geral = medias["media"].mean()
+    fig.add_hline(
+        y=media_geral,
+        line_dash="dot",
+        line_color="rgba(255,255,255,0.4)",
+        line_width=1.5,
+        annotation_text=f"Média anual: {media_geral:.0f} Wh/m²/dia",
+        annotation_position="top right",
+        annotation_font_color="rgba(255,255,255,0.6)",
+    )
 
     fig.update_layout(
         title=dict(
             text=(
-                "Energia Diária Média — Radiação Global Horizontal"
+                "Energia Solar Média por Estação do Ano"
                 "<br><span style='font-size:14px;font-weight:normal;color:gray'>"
-                "Estação NAT | jun/2024 – mai/2025 | Energia diária média</span>"
+                "Estação NAT | jun/2024 – mai/2025 | Hemisfério Sul</span>"
             ),
             x=0.5, xanchor="center",
         ),
         xaxis=dict(
-            title="Mês",
+            title="Estação",
             gridcolor="#262523",
             color="#797876",
+            tickfont=dict(size=13),
         ),
         yaxis=dict(
             title="Energia média diária (Wh/m²/dia)",
@@ -127,9 +148,8 @@ def criar_figura(medias: pd.DataFrame) -> go.Figure:
         plot_bgcolor="#1c1b19",
         paper_bgcolor="#171614",
         font=dict(family="sans-serif", color="#cdccca"),
-        bargap=0.25,
         showlegend=False,
-        margin=dict(t=130, b=60, l=60, r=20),
+        margin=dict(t=130, b=80, l=70, r=20),
     )
 
     return fig
@@ -157,19 +177,19 @@ def injetar_no_portal(fig: go.Figure, html_path: str, marcador: str) -> None:
 # ── Execução ─────────────────────────────────────────────────────────────────
 
 def gerar_grafico(path: str = CSV_PATH) -> go.Figure:
-    df      = carregar_dados(path, CSV_SEP)
-    medias  = preparar_medias_mensais(df)
-    fig     = criar_figura(medias)
+    df     = carregar_dados(path, CSV_SEP)
+    medias = preparar_medias_sazonais(df)
 
-    print(f"Meses calculados : {len(medias)}")
-    print(f"Registros válidos: {len(df[df[COLUNA] >= 0]):,}")
-    return fig
+    print("\nMédias sazonais calculadas:")
+    for _, row in medias.iterrows():
+        print(f"  {row['label'].replace(chr(10),' '):<30} {row['media']:>8.1f} Wh/m²/dia  (±{row['desvio']:.1f}, n={row['n_dias']} dias)")
+
+    return criar_figura(medias)
 
 
 if __name__ == "__main__":
     fig = gerar_grafico(path=CSV_PATH)
 
-    # Visualiza localmente antes de injetar no portal
     fig.show()
 
     resposta = input("\nGráfico OK? Injetar no index.html? [s/N]: ").strip().lower()
