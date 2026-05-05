@@ -1,10 +1,3 @@
-"""
-Radiação Global — Médias Mensais
-Estação NAT | Rede SONDA | jun/2024 – mai/2025
-
-Gera o gráfico de médias mensais e injeta no index.html do portal.
-"""
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -24,7 +17,7 @@ LABELS_MESES = {
     "2025-03": "Mar/25", "2025-04": "Abr/25", "2025-05": "Mai/25",
 }
 
-# ── Gradiente azul ───────────────────────────────────────────────────────────
+# ── Funções de Apoio ─────────────────────────────────────────────────────────
 
 def gerar_gradiente_azul(n: int) -> list[str]:
     azul_intenso = np.array([0, 56, 176])
@@ -36,64 +29,76 @@ def gerar_gradiente_azul(n: int) -> list[str]:
         cores.append(f"rgb({int(rgb[0])},{int(rgb[1])},{int(rgb[2])})")
     return cores
 
-# ── Pipeline de dados ────────────────────────────────────────────────────────
-
 def carregar_dados(path: str, sep: str) -> pd.DataFrame:
     df = pd.read_csv(path, sep=sep, low_memory=False)
     df["timestamp_utc"] = pd.to_datetime(df["timestamp_utc"])
     df[COLUNA] = pd.to_numeric(df[COLUNA], errors="coerce")
     return df
 
+# ── Pipeline de Cálculo (Exigência do Professor) ─────────────────────────────
 
-def preparar_medias_mensais(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Calcula a energia diária (Wh/m²) e a média mensal dessas energias.
-    Cada registro = 1 minuto → divide por 60 para converter W/m² em Wh/m².
-    """
+def preparar_dados_irradiacao(df: pd.DataFrame):
     df = df[df[COLUNA] >= 0].copy()
+    
+    # Extrai mês, dia e hora para os agrupamentos
     df["mes"] = df["timestamp_utc"].dt.to_period("M").astype(str)
     df["dia"] = df["timestamp_utc"].dt.date
+    df["hora"] = df["timestamp_utc"].dt.hour
 
-    # Soma diária: Σ(glo_avg) / 60  →  Wh/m² por dia
-    energia_diaria = (
-        df.groupby(["mes", "dia"])[COLUNA]
+    # PASSO 1: Calcular a Irradiação Horária de cada dia específico (Wh/m²)
+    # Soma a irradiância dos 60 minutos de cada hora e divide por 60.
+    irradiacao_diaria_por_hora = (
+        df.groupby(["mes", "dia", "hora"])[COLUNA]
         .sum()
         .div(60)
-        .round(2)
         .reset_index()
     )
-    energia_diaria.columns = ["mes", "dia", "energia_wh"]
+    irradiacao_diaria_por_hora.rename(columns={COLUNA: "energia_da_hora"}, inplace=True)
 
-    # Média mensal das energias diárias (Wh/m²/dia)
-    medias_mensais = (
-        energia_diaria.groupby("mes")["energia_wh"]
+    # PASSO 2: Calcular a Média Horária Mensal
+    # Tira a média da mesma hora considerando todos os dias do mês
+    media_horaria_mensal = (
+        irradiacao_diaria_por_hora.groupby(["mes", "hora"])["energia_da_hora"]
         .mean()
+        .reset_index()
+    )
+
+    # PASSO 3: Calcular a Média Mensal de Irradiação Diária
+    # Soma as 24 médias horárias de cada mês
+    media_mensal = (
+        media_horaria_mensal.groupby("mes")["energia_da_hora"]
+        .sum()
         .round(2)
         .reset_index()
     )
-    medias_mensais.columns = ["mes", "media"]
-    return medias_mensais
+    media_mensal.columns = ["mes", "media"]
+    
+    # Para salvar o passo 2 em CSV se quiser comprovar o cálculo para o professor
+    # media_horaria_mensal.to_csv("medias_horarias_mensais.csv", index=False)
+    
+    return media_mensal
 
 # ── Plotly ───────────────────────────────────────────────────────────────────
 
 def criar_figura(medias: pd.DataFrame) -> go.Figure:
     meses  = sorted(medias["mes"].unique())
     labels = [LABELS_MESES.get(m, m) for m in meses]
+    
+    # Valores em Wh/m²/dia (se quiser em kWh, divida por 1000 aqui)
     valores = [medias.loc[medias["mes"] == m, "media"].values[0] for m in meses]
     cores  = gerar_gradiente_azul(len(meses))
 
     fig = go.Figure()
 
-    # Barras coloridas por mês
     fig.add_trace(go.Bar(
         x=labels,
         y=valores,
         marker_color=cores,
-        hovertemplate="<b>%{x}</b><br>Energia: %{y:.1f} Wh/m²/dia<extra></extra>",
+        hovertemplate="<b>%{x}</b><br>Irradiação Média: %{y:,.0f} Wh/m²/dia<extra></extra>",
         name="Média mensal",
     ))
 
-    # Linha de tendência por cima
+    # Linha de tendência para visualização
     fig.add_trace(go.Scatter(
         x=labels,
         y=valores,
@@ -108,72 +113,52 @@ def criar_figura(medias: pd.DataFrame) -> go.Figure:
     fig.update_layout(
         title=dict(
             text=(
-                "Energia Diária Média — Radiação Global Horizontal"
+                "Média Mensal — Irradiação Global Horizontal"
                 "<br><span style='font-size:14px;font-weight:normal;color:gray'>"
-                "Estação NAT | jun/2024 – mai/2025 | Energia diária média</span>"
+                "Soma das médias horárias mensais (Wh/m²/dia) | Estação NAT</span>"
             ),
             x=0.5, xanchor="center",
         ),
-        xaxis=dict(
-            title="Mês",
-            gridcolor="#262523",
-            color="#797876",
-        ),
-        yaxis=dict(
-            title="Energia média diária (Wh/m²/dia)",
-            gridcolor="#262523",
-            color="#797876",
-        ),
+        xaxis=dict(title="Mês", gridcolor="#262523", color="#797876"),
+        yaxis=dict(title="Irradiação Diária Média (Wh/m²/dia)", gridcolor="#262523", color="#797876"),
         plot_bgcolor="#1c1b19",
         paper_bgcolor="#171614",
         font=dict(family="sans-serif", color="#cdccca"),
-        bargap=0.25,
-        showlegend=False,
         margin=dict(t=130, b=60, l=60, r=20),
+        bargap=0.25,
+        showlegend=False
     )
 
     return fig
 
-# ── Injetar no index.html ────────────────────────────────────────────────────
+# ── Injeção HTML ─────────────────────────────────────────────────────────────
 
 def injetar_no_portal(fig: go.Figure, html_path: str, marcador: str) -> None:
     grafico_html = fig.to_html(full_html=False, include_plotlyjs="cdn")
-
     with open(html_path, "r", encoding="utf-8") as f:
         portal = f.read()
-
+    
     if marcador not in portal:
-        print(f"[AVISO] Marcador '{marcador}' não encontrado em {html_path}.")
-        print("Verifique se o comentário está no index.html e tente novamente.")
+        print(f"[AVISO] Marcador '{marcador}' não encontrado.")
         return
 
     portal = portal.replace(marcador, grafico_html)
-
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(portal)
-
     print(f"Gráfico injetado com sucesso em: {html_path}")
 
 # ── Execução ─────────────────────────────────────────────────────────────────
 
-def gerar_grafico(path: str = CSV_PATH) -> go.Figure:
-    df      = carregar_dados(path, CSV_SEP)
-    medias  = preparar_medias_mensais(df)
-    fig     = criar_figura(medias)
-
-    print(f"Meses calculados : {len(medias)}")
-    print(f"Registros válidos: {len(df[df[COLUNA] >= 0]):,}")
-    return fig
-
-
 if __name__ == "__main__":
-    fig = gerar_grafico(path=CSV_PATH)
-
-    # Visualiza localmente antes de injetar no portal
+    print("Processando dados e calculando médias horárias...")
+    df = carregar_dados(CSV_PATH, CSV_SEP)
+    medias_mensais = preparar_dados_irradiacao(df)
+    
+    fig = criar_figura(medias_mensais)
     fig.show()
 
     resposta = input("\nGráfico OK? Injetar no index.html? [s/N]: ").strip().lower()
     if resposta == "s":
-        injetar_no_portal(fig, html_path=INDEX_HTML, marcador=MARCADOR)
+        injetar_no_portal(fig, INDEX_HTML, MARCADOR)
     else:
-        print("Injeção cancelada. Nenhum arquivo foi alterado.")
+        print("Injeção cancelada.")
