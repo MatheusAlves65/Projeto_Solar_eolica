@@ -453,6 +453,17 @@ btn.addEventListener('click', () => {
   applyTheme(theme); 
 });
 
+// ── Redimensionamento Automático dos Gráficos no Mobile ─────────────
+window.addEventListener('resize', function() {
+  document.querySelectorAll('.plotly-graph-div').forEach(function(gd) {
+    if(gd.data) {
+      Plotly.Plots.resize(gd);
+    }
+  });
+});
+
+
+
 // ── Controle de Abas ────────────────────────────────────────────────
 document.querySelectorAll('.nav-tab').forEach(tab => {
   tab.addEventListener('click', () => {
